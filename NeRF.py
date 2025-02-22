@@ -3,23 +3,17 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
-from sympy.physics.units import frequency
 from torchvision import transforms
 from PIL import Image # Used to load and manipulate images
 
 def positional_encoding(x, L=10):
 	#frequencies: Creates a tensor of increasing frequency values (powers of 2 times π).
 	# ex. l=4 -- [ 1.0 * π, 2.0 * π, 4.0 * π, 8.0 * π ]
-    frequencies = torch.linspace(-(L-1)*np.pi, (L-1)*np.pi, L, dtype=torch.float32)
-    # Bad frequencies = np.logspace(0, np.log10(L), num=L, dtype=np.float32)
-    # Bad frequencies = 2.0 ** np.arange(0, L, dtype=np.float32)
-    # OK frequencies = np.linspace(-(L-1)*np.pi, (L-1)*np.pi, num=L, dtype=np.float32)
-    # Bad frequencies = 2.0 ** torch.arange(0, L, dtype=torch.float32) * np.pi
+    frequencies = 2.**torch.linspace(0, L, steps=L, dtype=torch.float32)
     #x_expanded: Expands x by multiplying each input coordinate by all frequency values.
     x_expanded = x[..., None] * frequencies[None, :]
     #torch.cat([...], dim=-1): Concatenates sine and cosine transformations along the last dimension.
-    encoding = torch.cat([np.sin(x_expanded), np.cos(x_expanded)], dim=-1)
-    # encoding = torch.cat([torch.sin(x_expanded), torch.cos(x_expanded)], dim=-1)
+    encoding = torch.cat([np.sin(0.1*x_expanded)/10, np.cos(0.1*x_expanded)/10], dim=-1)
     #view(x.shape[0], -1): Reshapes the output to maintain batch size while flattening the feature dimension.
     return encoding.view(x.shape[0], -1)
 
@@ -34,15 +28,16 @@ class NeRFModel(nn.Module):
         self.fc3 = nn.Linear(hidden_dim, 4)
 
         self.softplus = nn.Softplus()
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.2)
+        self.relu = nn.ReLU6()
+        self.relu = nn.Softsign()
+
 
     def forward(self, x):
         x = positional_encoding(x, self.L)
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
+        x = self.softplus(self.fc2(x))
         x = self.softplus(self.fc3(x))
-        # x = self.softplus(self.fc3(x))
         return x
 
 def load_image(image_path):

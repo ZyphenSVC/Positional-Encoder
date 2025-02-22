@@ -25,7 +25,7 @@ def pe1D(p,L):
     # frequency = 2.0**torch.arange(0, L, dtype=torch.float32) * np.pi
     # Frequency Response with scalar weights to prevent extreme values
     # Can possibly modify or generalize
-    encoded = np.concatenate([np.sin(0.1*np.pi * frequency * p), np.cos(0.1*np.pi *
+    encoded = np.concatenate([np.sin(0.1*np.pi * frequency * p)/10, np.cos(0.1*np.pi *
                                                                             frequency *
                               p)/10],
                              axis=-1)
@@ -52,14 +52,14 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(dim, 32)
         self.fc2 = nn.Linear(32, 32)
         self.fc3 = nn.Linear(32, 1)
-        self.activation = nn.Softsign()
-        self.outputActivation = nn.Tanh()
+        self.activation = nn.modules.activation.RReLU()
+        self.outputActivation = nn.Softplus()
 
     def forward(self, x):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
-        x = self.outputActivation(x)
+        # x = self.outputActivation(x)
         return x
 
 def train(datax, datay, dim, epochs=1000, lr=0.01):
