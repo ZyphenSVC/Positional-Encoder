@@ -52,14 +52,14 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(dim, 32)
         self.fc2 = nn.Linear(32, 32)
         self.fc3 = nn.Linear(32, 1)
-        self.activation = nn.modules.activation.RReLU()
-        self.outputActivation = nn.Softplus()
+        self.activation = nn.ReLU6()
+        self.outputActivation = nn.Tanh()
 
     def forward(self, x):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
-        # x = self.outputActivation(x)
+        x = self.outputActivation(x)
         return x
 
 def train(datax, datay, dim, epochs=1000, lr=0.01):
