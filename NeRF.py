@@ -9,11 +9,11 @@ from PIL import Image # Used to load and manipulate images
 def positional_encoding(x, L=10):
 	#frequencies: Creates a tensor of increasing frequency values (powers of 2 times π).
 	# ex. l=4 -- [ 1.0 * π, 2.0 * π, 4.0 * π, 8.0 * π ]
-    frequencies = 2.**torch.linspace(0, L, steps=L, dtype=torch.float32)
+    frequencies = 2.**torch.linspace(0, L -1, steps=L, dtype=torch.float32)
     #x_expanded: Expands x by multiplying each input coordinate by all frequency values.
     x_expanded = x[..., None] * frequencies[None, :]
     #torch.cat([...], dim=-1): Concatenates sine and cosine transformations along the last dimension.
-    encoding = torch.cat([np.sin(0.1*x_expanded)/10, np.cos(0.1*x_expanded)/10], dim=-1)
+    encoding = torch.cat([np.sin(x_expanded), np.cos(x_expanded)], dim=-1)
     #view(x.shape[0], -1): Reshapes the output to maintain batch size while flattening the feature dimension.
     return encoding.view(x.shape[0], -1)
 
@@ -69,8 +69,19 @@ def train_nerf(model, image, epochs=1000, lr=1e-3):
         loss.backward()
         optimizer.step()
 
+
         if epoch % 100 == 0:
             print(f"Epoch {epoch}, Loss: {loss.item()}")
+
+            rendered_image = render_nerf(model, image)
+
+            plt.figure(figsize=(5, 4))
+
+            # Display Rendered Image
+            plt.imshow(rendered_image)
+            plt.title(f"Epoch {epoch}, Loss: {loss.item()}")
+            # plt.axis('off')
+            plt.show()
 
 def render_nerf(model, image):
     rays = generate_rays(image)
@@ -80,11 +91,5 @@ def render_nerf(model, image):
 
 #temp data for now
 image = load_image("images.jpeg")
-model = NeRFModel(L=127)
+model = NeRFModel(L=128)
 train_nerf(model, image)
-rendered_image = render_nerf(model, image)
-
-# Display Rendered Image
-plt.imshow(rendered_image)
-plt.axis('off')
-plt.show()
