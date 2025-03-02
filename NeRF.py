@@ -36,13 +36,14 @@ class NeRFModel(nn.Module):
         x = positional_encoding(x, self.L)
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
-        x = self.softplus(self.fc2(x))
-        x = self.softplus(self.fc3(x))
+        x = self.relu(self.fc3(x))
+        # x = self.softplus(self.fc2(x))
+        # x = self.softplus(self.fc3(x))
         return x
 
 def load_image(image_path):
     img = Image.open(image_path).convert("RGB")
-    transform = transforms.Compose([transforms.Resize((128, 128)), transforms.ToTensor()])
+    transform = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
     return transform(img).permute(1, 2, 0)  # Convert to HWC format
 
 def generate_rays(image):
